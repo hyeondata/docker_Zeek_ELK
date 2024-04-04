@@ -1,0 +1,74 @@
+# ## Filebeat configuration
+# ## https://github.com/elastic/beats/blob/7.17/deploy/docker/filebeat.docker.yml
+# #
+
+
+# filebeat.config:
+#   modules:
+#     path: ${path.config}/modules.d/*.yml
+#     reload.enabled: false
+
+# filebeat.autodiscover:
+#   providers:
+#     # The Docker autodiscover provider automatically retrieves logs from Docker
+#     # containers as they start and stop.
+#     - type: docker
+#       hints.enabled: true
+
+# processors:
+#   - add_cloud_metadata: ~
+
+# monitoring:
+#   enabled: true
+#   elasticsearch:
+#     username: beats_system
+#     password: ${BEATS_SYSTEM_PASSWORD}
+
+# output.elasticsearch:
+#   hosts: [ http://elasticsearch:9200 ]
+#   username: filebeat_internal
+#   password: ${FILEBEAT_INTERNAL_PASSWORD}
+
+# ## HTTP endpoint for health checking
+# ## https://www.elastic.co/guide/en/beats/filebeat/7.17/http-endpoint.html
+# #
+
+# http:
+#   enabled: true
+#   host: 0.0.0.0
+name: filebeat
+
+filebeat.registry: # offset 등 메타정보를 가지고 있음
+  path: ${path.data}/registry_notconn
+  file_permissions: 0665
+
+# ----------logging-----
+logging.to_files: true # 로그 파일 사용
+logging.metrics.namespaces: [test] #로그 namespaces
+
+logging.files:  #로그 파일 정보
+  path: /data/beat/logs
+  name: filebeat.log
+  rotateeverybytes: 104857600
+  keepfiles: 7
+  permissions: 0600
+  interval: 24h
+
+
+
+
+#-----input
+
+filebeat.inputs:
+  # - type: log
+
+  - type: filestream
+    enabled: true
+    paths:
+      - "/data/testLog/http.log"       ##사용할 로그들 정의 필요 test로 http.log 만 가져오게함
+    exclude_lines: ["^#"]
+    exclude_files: [".gz$"]
+    scan_frequency: 1s
+
+output.logstash:
+  hosts: ["logstash:5044"]
